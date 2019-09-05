@@ -11,6 +11,8 @@ import (
 
 func main() {
 	branch := os.Args[1]
+	branches := strings.Split(branch, "/")
+	id := branches[1]
 
 	var (
 		cmdOut       []byte
@@ -23,7 +25,7 @@ func main() {
 	// get commit ID
 	cmd.WriteString("git log | head -n 1 | cut -c 8-")
 	if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error running command: ", err)
+		fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 		os.Exit(1)
 	}
 	commitID := string(cmdOut)
@@ -35,10 +37,10 @@ func main() {
 	cmd.WriteString(branch)
 	cmd.WriteString(" ")
 	cmd.WriteString("--grep=\"\\[\\")
-	cmd.WriteString("#168215310")
+	cmd.WriteString(id)
 	cmd.WriteString("\\]\" | grep \"commit\" | cut -c 8-")
 	if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error running command: ", err)
+		fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 		os.Exit(1)
 	}
 	commitIDs := strings.Split(string(cmdOut), "\n")
@@ -50,10 +52,10 @@ func main() {
 	cmd.WriteString(branch)
 	cmd.WriteString(" ")
 	cmd.WriteString("| grep \"\\[\\")
-	cmd.WriteString("#168215310")
+	cmd.WriteString(id)
 	cmd.WriteString("\\]\" | cut -c 5-")
 	if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-		fmt.Fprintln(os.Stderr, "There was an error running command: ", err)
+		fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 		os.Exit(1)
 	}
 	commitMsgs := strings.Split(string(cmdOut), "\n")
@@ -79,7 +81,7 @@ func main() {
 			cmd.WriteString(" ")
 			cmd.WriteString("| grep \"|\" | cut -f1 -d\"|\"")
 			if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-				fmt.Fprintln(os.Stderr, "There was an error running command: ", err)
+				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 				os.Exit(1)
 			}
 			commitFiles := strings.Join(strings.Split(string(cmdOut), "\n"), " ")
@@ -94,7 +96,7 @@ func main() {
 			cmd.WriteString(" ")
 			cmd.WriteString(commitFiles)
 			if _, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-				fmt.Fprintln(os.Stderr, "There was an error running command: ", err)
+				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 				os.Exit(1)
 			}
 			cmd.Reset()
@@ -106,7 +108,7 @@ func main() {
 			cmd.WriteString(commitMsg)
 			cmd.WriteString("\"")
 			if _, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-				fmt.Fprintln(os.Stderr, "There was an error running command: ", err)
+				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 				os.Exit(1)
 			}
 			cmd.Reset()
@@ -115,6 +117,9 @@ func main() {
 				rand.Seed(time.Now().UnixNano())
 				time.Sleep(time.Duration(rand.Int63n(10-5+1)+5) * time.Minute)
 			}
+		} else {
+			fmt.Println("Nothing to process")
 		}
 	}
+
 }
