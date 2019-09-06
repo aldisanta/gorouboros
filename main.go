@@ -79,7 +79,7 @@ func main() {
 			cmd.WriteString(" ")
 			cmd.WriteString(nextCommitID)
 			cmd.WriteString(" ")
-			cmd.WriteString("| grep \"|\" | cut -f1 -d\"|\"")
+			cmd.WriteString("--name-only")
 			if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
 				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 				os.Exit(1)
