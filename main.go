@@ -72,14 +72,43 @@ func main() {
 			nextCommitID = commitIDs[idx]
 			commitMsg = commitMsgs[idx]
 
-			// get commit files
+			// get deleted commit files & check if it's deletion
 			cmd.WriteString("git diff --stat")
 			cmd.WriteString(" ")
 			cmd.WriteString(prevCommitID)
 			cmd.WriteString(" ")
 			cmd.WriteString(nextCommitID)
 			cmd.WriteString(" ")
-			cmd.WriteString("--name-only")
+			cmd.WriteString("--name-only --diff-filter=D")
+			if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
+				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
+				os.Exit(1)
+			}
+			deleteFiles := strings.Join(strings.Split(string(cmdOut), "\n"), " ")
+			cmd.Reset()
+
+			// running delete
+			if len(string(cmdOut)) > 0 {
+				cmd.WriteString("rm")
+				cmd.WriteString(" ")
+				cmd.WriteString(deleteFiles)
+				cmd.WriteString(" ")
+				cmd.WriteString("2> /dev/null")
+				if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
+					fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
+					os.Exit(1)
+				}
+				cmd.Reset()
+			}
+
+			// get commit files & exclude Delete
+			cmd.WriteString("git diff --stat")
+			cmd.WriteString(" ")
+			cmd.WriteString(prevCommitID)
+			cmd.WriteString(" ")
+			cmd.WriteString(nextCommitID)
+			cmd.WriteString(" ")
+			cmd.WriteString("--name-only --diff-filter=d")
 			if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
 				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 				os.Exit(1)
@@ -115,7 +144,7 @@ func main() {
 
 			if idx > 0 {
 				rand.Seed(time.Now().UnixNano())
-				time.Sleep(time.Duration(rand.Int63n(10-5+1)+5) * time.Minute)
+				time.Sleep(time.Duration(rand.Int63n(5-3+1)+3) * time.Minute)
 			}
 		} else {
 			fmt.Println("Nothing to process")
