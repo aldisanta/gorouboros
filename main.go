@@ -31,10 +31,22 @@ func main() {
 	commitID := string(cmdOut)
 	cmd.Reset()
 
-	// get commit works
+	// get latest commit has
+	cmd.WriteString("git rev-parse HEAD")
+	if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
+		fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
+		os.Exit(1)
+	}
+	lastCommitHash := strings.TrimSpace(string(cmdOut))
+	cmd.Reset()
+
+	// get commit works, from latest commit hash
 	cmd.WriteString("git log")
 	cmd.WriteString(" ")
 	cmd.WriteString(branch)
+	cmd.WriteString(" ")
+	cmd.WriteString(lastCommitHash)
+	cmd.WriteString("..HEAD")
 	cmd.WriteString(" ")
 	cmd.WriteString("--grep=\"\\[\\")
 	cmd.WriteString(id)
@@ -50,6 +62,9 @@ func main() {
 	cmd.WriteString("git log")
 	cmd.WriteString(" ")
 	cmd.WriteString(branch)
+	cmd.WriteString(" ")
+	cmd.WriteString(lastCommitHash)
+	cmd.WriteString("..HEAD")
 	cmd.WriteString(" ")
 	cmd.WriteString("| grep \"\\[\\")
 	cmd.WriteString(id)
