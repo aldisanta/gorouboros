@@ -84,67 +84,68 @@ func main() {
 				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 				os.Exit(1)
 			}
-			deleteFiles := strings.Join(strings.Split(string(cmdOut), "\n"), " ")
 			cmd.Reset()
 
 			// running delete
 			if len(string(cmdOut)) > 0 {
-				cmd.WriteString("rm")
-				cmd.WriteString(" ")
-				cmd.WriteString(deleteFiles)
-				cmd.WriteString(" ")
-				cmd.WriteString("2> /dev/null")
-				if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-					fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
-					os.Exit(1)
+				deleteFilesArray := strings.Split(string(cmdOut), "\n")
+				for _, fileName := range deleteFilesArray {
+					os.Remove(fileName)
 				}
-				cmd.Reset()
 			}
 
-			// get commit files & exclude Delete
+			// get commit files & exclude Delete, Rename
 			cmd.WriteString("git diff --stat")
 			cmd.WriteString(" ")
 			cmd.WriteString(prevCommitID)
 			cmd.WriteString(" ")
 			cmd.WriteString(nextCommitID)
 			cmd.WriteString(" ")
-			cmd.WriteString("--name-only --diff-filter=d")
+			cmd.WriteString("--name-only --diff-filter=dr")
 			if cmdOut, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
 				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
 				os.Exit(1)
 			}
+
+			// split and join
 			commitFiles := strings.Join(strings.Split(string(cmdOut), "\n"), " ")
+			// gorouboros
+			commitFiles = strings.Replace(commitFiles, "gorouboros", "", -1)
+			// gitignore
+			commitFiles = strings.Replace(commitFiles, ".gitignore", "", -1)
 			cmd.Reset()
 
-			// checkout from hash specify files
-			cmd.WriteString("git checkout")
-			cmd.WriteString(" ")
-			cmd.WriteString(nextCommitID)
-			cmd.WriteString(" ")
-			cmd.WriteString("--")
-			cmd.WriteString(" ")
-			cmd.WriteString(commitFiles)
-			if _, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
-				os.Exit(1)
-			}
-			cmd.Reset()
+			if len(commitFiles) > 0 {
+				// checkout from hash specify files
+				cmd.WriteString("git checkout")
+				cmd.WriteString(" ")
+				cmd.WriteString(nextCommitID)
+				cmd.WriteString(" ")
+				cmd.WriteString("--")
+				cmd.WriteString(" ")
+				cmd.WriteString(commitFiles)
+				if _, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
+					fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
+					os.Exit(1)
+				}
+				cmd.Reset()
 
-			// commit files with messages
-			cmd.WriteString("git add . && git commit -m")
-			cmd.WriteString(" ")
-			cmd.WriteString("\"")
-			cmd.WriteString(commitMsg)
-			cmd.WriteString("\"")
-			if _, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
-				fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
-				os.Exit(1)
-			}
-			cmd.Reset()
+				// commit files with messages
+				cmd.WriteString("git add . && git commit -m")
+				cmd.WriteString(" ")
+				cmd.WriteString("\"")
+				cmd.WriteString(commitMsg)
+				cmd.WriteString("\"")
+				if _, err = exec.Command("bash", "-c", cmd.String()).Output(); err != nil {
+					fmt.Fprintln(os.Stderr, "There was an error running command: ", cmd.String(), " || error: ", err)
+					os.Exit(1)
+				}
+				cmd.Reset()
 
-			if idx > 0 {
-				rand.Seed(time.Now().UnixNano())
-				time.Sleep(time.Duration(rand.Int63n(5-3+1)+3) * time.Minute)
+				if idx > 0 {
+					rand.Seed(time.Now().UnixNano())
+					time.Sleep(time.Duration(rand.Int63n(5-3+1)+3) * time.Minute)
+				}
 			}
 		} else {
 			fmt.Println("Nothing to process")
